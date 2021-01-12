@@ -30,6 +30,10 @@ jobs:
         python --version
         pip --version
         pip install -r requirements.txt
+        pip install  --force-reinstall https://github.com/inexio/pyasn1/archive/master.zip  https://github.com/inexio/pyasn1-modules/archive/master.zip   
+        pip install -e .
     - name: Run tests
       run: |
+        export CURRENTPATH=`pwd`
+        export PATH="$PATH:$CURRENTPATH/venv/bin"
         PYTHONPATH=.:$PYTHONPATH python tests/__main__.py
