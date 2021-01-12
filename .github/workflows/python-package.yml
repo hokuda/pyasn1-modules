@@ -29,7 +29,9 @@ jobs:
         . ./venv/bin/activate
         python --version
         pip --version
+        pip install codecov
         pip install -r requirements.txt
+        pip install pyasn1
         pip install  --force-reinstall https://github.com/inexio/pyasn1/archive/master.zip  https://github.com/inexio/pyasn1-modules/archive/master.zip   
         pip install -e .
     - name: Run tests
