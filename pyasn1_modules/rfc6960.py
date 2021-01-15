@@ -3,13 +3,14 @@
 #
 # Created by Russ Housley.
 #
-# Copyright (c) 2019, Vigil Security, LLC
+# Copyright (c) 2020, Vigil Security, LLC
 # License: http://snmplabs.com/pyasn1/license.html
 #
 # Online Certificate Status Protocol (OCSP)
 #
 # ASN.1 source from:
 # https://www.rfc-editor.org/rfc/rfc6960.txt
+# https://www.rfc-editor.org/rfc/rfc8984.txt
 #
 
 from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful
@@ -65,6 +66,12 @@ id_pkix_ocsp_service_locator = rfc2560.id_pkix_ocsp_service_locator
 
 id_pkix_ocsp_pref_sig_algs = id_pkix_ocsp + (8, )
 id_pkix_ocsp_extended_revoke = id_pkix_ocsp + (9, )
+
+
+# Nonce from RFC 8984
+
+class Nonce(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(1, 32)
 
 
 # Updated structures (mostly to improve openTypes support)
@@ -195,7 +202,6 @@ class PreferredSignatureAlgorithms(univ.SequenceOf):
     componentType = PreferredSignatureAlgorithm()
 
 
-
 # Response Type OID to Response Map
 
 ocspResponseMap = {
@@ -210,7 +216,7 @@ _certificateExtensionsMapUpdate = {
     # Certificate Extension
     id_pkix_ocsp_nocheck: univ.Null(""),
     # OCSP Request Extensions
-    id_pkix_ocsp_nonce: univ.OctetString(),
+    id_pkix_ocsp_nonce: Nonce(),
     id_pkix_ocsp_response: AcceptableResponses(),
     id_pkix_ocsp_service_locator: ServiceLocator(),
     id_pkix_ocsp_pref_sig_algs: PreferredSignatureAlgorithms(),

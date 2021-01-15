@@ -7,27 +7,32 @@
 # Certificate Management Protocol structures as per RFC4210
 #
 # Based on Alex Railean's work
+# Modified by Russ Housley to add support for opentypes.
+#
+# ASN.1 source from:
+# http://www.rfc-editor.org/rfc/rfc4210.txt
 #
 from pyasn1.type import char
 from pyasn1.type import constraint
 from pyasn1.type import namedtype
 from pyasn1.type import namedval
+from pyasn1.type import opentype
 from pyasn1.type import tag
 from pyasn1.type import univ
 from pyasn1.type import useful
 
-from pyasn1_modules import rfc2314
-from pyasn1_modules import rfc2459
-from pyasn1_modules import rfc2511
+from pyasn1_modules import rfc2986
+from pyasn1_modules import rfc4211
+from pyasn1_modules import rfc5280
 
 MAX = float('inf')
 
 
-class KeyIdentifier(univ.OctetString):
+class KeyIdentifier(rfc5280.KeyIdentifier):
     pass
 
 
-class CMPCertificate(rfc2459.Certificate):
+class CMPCertificate(rfc5280.Certificate):
     pass
 
 
@@ -49,7 +54,7 @@ class PKIFreeText(univ.SequenceOf):
 
 class PollRepContent(univ.SequenceOf):
     """
-         PollRepContent ::= SEQUENCE OF SEQUENCE {
+    PollRepContent ::= SEQUENCE OF SEQUENCE {
          certReqId              INTEGER,
          checkAfter             INTEGER,  -- time in seconds
          reason                 PKIFreeText OPTIONAL
@@ -68,7 +73,7 @@ class PollRepContent(univ.SequenceOf):
 
 class PollReqContent(univ.SequenceOf):
     """
-         PollReqContent ::= SEQUENCE OF SEQUENCE {
+    PollReqContent ::= SEQUENCE OF SEQUENCE {
          certReqId              INTEGER
      }
 
@@ -82,15 +87,19 @@ class PollReqContent(univ.SequenceOf):
     componentType = CertReq()
 
 
+infoTypeAndValueMap = { }
+
 class InfoTypeAndValue(univ.Sequence):
     """
     InfoTypeAndValue ::= SEQUENCE {
-     infoType               OBJECT IDENTIFIER,
-     infoValue              ANY DEFINED BY infoType  OPTIONAL
-    }"""
+         infoType           OBJECT IDENTIFIER,
+         infoValue          ANY DEFINED BY infoType   OPTIONAL
+     }
+    """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('infoType', univ.ObjectIdentifier()),
-        namedtype.OptionalNamedType('infoValue', univ.Any())
+        namedtype.OptionalNamedType('infoValue', univ.Any(),
+            openType=opentype.OpenType('infoType', infoTypeAndValueMap))
     )
 
 
@@ -107,7 +116,7 @@ class PKIConfirmContent(univ.Null):
 
 
 class CRLAnnContent(univ.SequenceOf):
-    componentType = rfc2459.CertificateList()
+    componentType = rfc5280.CertificateList()
 
 
 class CAKeyUpdAnnContent(univ.Sequence):
@@ -133,8 +142,8 @@ class RevDetails(univ.Sequence):
      }
     """
     componentType = namedtype.NamedTypes(
-        namedtype.NamedType('certDetails', rfc2511.CertTemplate()),
-        namedtype.OptionalNamedType('crlEntryDetails', rfc2459.Extensions())
+        namedtype.NamedType('certDetails', rfc4211.CertTemplate()),
+        namedtype.OptionalNamedType('crlEntryDetails', rfc5280.Extensions())
     )
 
 
@@ -144,14 +153,14 @@ class RevReqContent(univ.SequenceOf):
 
 class CertOrEncCert(univ.Choice):
     """
-     CertOrEncCert ::= CHOICE {
+    CertOrEncCert ::= CHOICE {
          certificate     [0] CMPCertificate,
          encryptedCert   [1] EncryptedValue
      }
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('certificate', CMPCertificate().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))),
-        namedtype.NamedType('encryptedCert', rfc2511.EncryptedValue().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)))
+        namedtype.NamedType('encryptedCert', rfc4211.EncryptedValue().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)))
     )
 
 
@@ -165,8 +174,8 @@ class CertifiedKeyPair(univ.Sequence):
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('certOrEncCert', CertOrEncCert()),
-        namedtype.OptionalNamedType('privateKey', rfc2511.EncryptedValue().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))),
-        namedtype.OptionalNamedType('publicationInfo', rfc2511.PKIPublicationInfo().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)))
+        namedtype.OptionalNamedType('privateKey', rfc4211.EncryptedValue().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))),
+        namedtype.OptionalNamedType('publicationInfo', rfc4211.PKIPublicationInfo().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)))
     )
 
 
@@ -183,16 +192,29 @@ class Challenge(univ.Sequence):
      }
     """
     componentType = namedtype.NamedTypes(
-        namedtype.OptionalNamedType('owf', rfc2459.AlgorithmIdentifier()),
+        namedtype.OptionalNamedType('owf', rfc5280.AlgorithmIdentifier()),
         namedtype.NamedType('witness', univ.OctetString()),
         namedtype.NamedType('challenge', univ.OctetString())
+    )
+
+
+class Rand(univ.Sequence):
+    """
+    Rand ::= SEQUENCE {
+        int      INTEGER,
+        sender   GeneralName
+    }
+    """
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('int', univ.Integer()),
+        namedtype.NamedType('sender', rfc5280.GeneralName())
     )
 
 
 class PKIStatus(univ.Integer):
     """
     PKIStatus ::= INTEGER {
-         accepted                (0),
+         accepted               (0),
          grantedWithMods        (1),
          rejection              (2),
          waiting                (3),
@@ -242,6 +264,7 @@ class PKIFailureInfo(univ.BitString):
          systemUnavail       (24),
          systemFailure       (25),
          duplicateCertReq    (26)
+     }
     """
     namedValues = namedval.NamedValues(
         ('badAlg', 0),
@@ -322,6 +345,9 @@ class CertStatus(univ.Sequence):
 
 
 class CertConfirmContent(univ.SequenceOf):
+    """
+    CertConfirmContent ::= SEQUENCE OF CertStatus
+    """
     componentType = CertStatus()
 
 
@@ -337,10 +363,10 @@ class RevAnnContent(univ.Sequence):
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('status', PKIStatus()),
-        namedtype.NamedType('certId', rfc2511.CertId()),
+        namedtype.NamedType('certId', rfc4211.CertId()),
         namedtype.NamedType('willBeRevokedAt', useful.GeneralizedTime()),
         namedtype.NamedType('badSinceDate', useful.GeneralizedTime()),
-        namedtype.OptionalNamedType('crlDetails', rfc2459.Extensions())
+        namedtype.OptionalNamedType('crlDetails', rfc5280.Extensions())
     )
 
 
@@ -352,6 +378,7 @@ class RevRepContent(univ.Sequence):
                                              OPTIONAL,
          crls     [1] SEQUENCE SIZE (1..MAX) OF CertificateList
                                              OPTIONAL
+     }
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType(
@@ -361,13 +388,13 @@ class RevRepContent(univ.Sequence):
             )
         ),
         namedtype.OptionalNamedType(
-            'revCerts', univ.SequenceOf(componentType=rfc2511.CertId()).subtype(
+            'revCerts', univ.SequenceOf(componentType=rfc4211.CertId()).subtype(
                 sizeSpec=constraint.ValueSizeConstraint(1, MAX),
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
             )
         ),
         namedtype.OptionalNamedType(
-            'crls', univ.SequenceOf(componentType=rfc2459.CertificateList()).subtype(
+            'crls', univ.SequenceOf(componentType=rfc5280.CertificateList()).subtype(
                 sizeSpec=constraint.ValueSizeConstraint(1, MAX),
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)
             )
@@ -443,6 +470,9 @@ class CertRepMessage(univ.Sequence):
 
 
 class POPODecKeyChallContent(univ.SequenceOf):
+    """
+    POPODecKeyChallContent ::= SEQUENCE OF Challenge
+    """
     componentType = Challenge()
 
 
@@ -456,10 +486,10 @@ class OOBCertHash(univ.Sequence):
     """
     componentType = namedtype.NamedTypes(
         namedtype.OptionalNamedType(
-            'hashAlg', rfc2459.AlgorithmIdentifier().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))
+            'hashAlg', rfc5280.AlgorithmIdentifier().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))
         ),
         namedtype.OptionalNamedType(
-            'certId', rfc2511.CertId().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1))
+            'certId', rfc4211.CertId().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1))
         ),
         namedtype.NamedType('hashVal', univ.BitString())
     )
@@ -484,8 +514,8 @@ class DHBMParameter(univ.Sequence):
      }   -- or HMAC [RFC2104, RFC2202])
     """
     componentType = namedtype.NamedTypes(
-        namedtype.NamedType('owf', rfc2459.AlgorithmIdentifier()),
-        namedtype.NamedType('mac', rfc2459.AlgorithmIdentifier())
+        namedtype.NamedType('owf', rfc5280.AlgorithmIdentifier()),
+        namedtype.NamedType('mac', rfc5280.AlgorithmIdentifier())
     )
 
 
@@ -505,9 +535,9 @@ class PBMParameter(univ.Sequence):
         namedtype.NamedType(
             'salt', univ.OctetString().subtype(subtypeSpec=constraint.ValueSizeConstraint(0, 128))
         ),
-        namedtype.NamedType('owf', rfc2459.AlgorithmIdentifier()),
+        namedtype.NamedType('owf', rfc5280.AlgorithmIdentifier()),
         namedtype.NamedType('iterationCount', univ.Integer()),
-        namedtype.NamedType('mac', rfc2459.AlgorithmIdentifier())
+        namedtype.NamedType('mac', rfc5280.AlgorithmIdentifier())
     )
 
 
@@ -515,6 +545,9 @@ id_PasswordBasedMac = univ.ObjectIdentifier('1.2.840.113533.7.66.13')
 
 
 class PKIProtection(univ.BitString):
+    """
+    PKIProtection ::= BIT STRING
+    """
     pass
 
 
@@ -558,7 +591,7 @@ class PKIBody(univ.Choice):
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType(
-            'ir', rfc2511.CertReqMessages().subtype(
+            'ir', rfc4211.CertReqMessages().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
             )
         ),
@@ -568,7 +601,7 @@ class PKIBody(univ.Choice):
             )
         ),
         namedtype.NamedType(
-            'cr', rfc2511.CertReqMessages().subtype(
+            'cr', rfc4211.CertReqMessages().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 2)
             )
         ),
@@ -578,7 +611,7 @@ class PKIBody(univ.Choice):
             )
         ),
         namedtype.NamedType(
-            'p10cr', rfc2314.CertificationRequest().subtype(
+            'p10cr', rfc2986.CertificationRequest().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 4)
             )
         ),
@@ -593,7 +626,7 @@ class PKIBody(univ.Choice):
             )
         ),
         namedtype.NamedType(
-            'kur', rfc2511.CertReqMessages().subtype(
+            'kur', rfc4211.CertReqMessages().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 7)
             )
         ),
@@ -603,7 +636,7 @@ class PKIBody(univ.Choice):
             )
         ),
         namedtype.NamedType(
-            'krr', rfc2511.CertReqMessages().subtype(
+            'krr', rfc4211.CertReqMessages().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 9)
             )
         ),
@@ -623,7 +656,7 @@ class PKIBody(univ.Choice):
             )
         ),
         namedtype.NamedType(
-            'ccr', rfc2511.CertReqMessages().subtype(
+            'ccr', rfc4211.CertReqMessages().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 13)
             )
         ),
@@ -670,6 +703,8 @@ class PKIBody(univ.Choice):
             )
         ),
         namedtype.NamedType(
+            # this should really be 'genp' not 'gen'
+            # not changed to preserve compatibility
             'gen', GenRepContent().subtype(
                 explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 22)
             )
@@ -700,21 +735,20 @@ class PKIBody(univ.Choice):
 class PKIHeader(univ.Sequence):
     """
     PKIHeader ::= SEQUENCE {
-    pvno                INTEGER     { cmp1999(1), cmp2000(2) },
-    sender              GeneralName,
-    recipient           GeneralName,
-    messageTime     [0] GeneralizedTime         OPTIONAL,
-    protectionAlg   [1] AlgorithmIdentifier     OPTIONAL,
-    senderKID       [2] KeyIdentifier           OPTIONAL,
-    recipKID        [3] KeyIdentifier           OPTIONAL,
-    transactionID   [4] OCTET STRING            OPTIONAL,
-    senderNonce     [5] OCTET STRING            OPTIONAL,
-    recipNonce      [6] OCTET STRING            OPTIONAL,
-    freeText        [7] PKIFreeText             OPTIONAL,
-    generalInfo     [8] SEQUENCE SIZE (1..MAX) OF
-                     InfoTypeAndValue     OPTIONAL
-    }
-
+        pvno                INTEGER     { cmp1999(1), cmp2000(2) },
+        sender              GeneralName,
+        recipient           GeneralName,
+        messageTime     [0] GeneralizedTime         OPTIONAL,
+        protectionAlg   [1] AlgorithmIdentifier     OPTIONAL,
+        senderKID       [2] KeyIdentifier           OPTIONAL,
+        recipKID        [3] KeyIdentifier           OPTIONAL,
+        transactionID   [4] OCTET STRING            OPTIONAL,
+        senderNonce     [5] OCTET STRING            OPTIONAL,
+        recipNonce      [6] OCTET STRING            OPTIONAL,
+        freeText        [7] PKIFreeText             OPTIONAL,
+        generalInfo     [8] SEQUENCE SIZE (1..MAX) OF
+                               InfoTypeAndValue     OPTIONAL
+     }
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType(
@@ -722,15 +756,15 @@ class PKIHeader(univ.Sequence):
                 namedValues=namedval.NamedValues(('cmp1999', 1), ('cmp2000', 2))
             )
         ),
-        namedtype.NamedType('sender', rfc2459.GeneralName()),
-        namedtype.NamedType('recipient', rfc2459.GeneralName()),
+        namedtype.NamedType('sender', rfc5280.GeneralName()),
+        namedtype.NamedType('recipient', rfc5280.GeneralName()),
         namedtype.OptionalNamedType('messageTime', useful.GeneralizedTime().subtype(
             explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0))),
-        namedtype.OptionalNamedType('protectionAlg', rfc2459.AlgorithmIdentifier().subtype(
+        namedtype.OptionalNamedType('protectionAlg', rfc5280.AlgorithmIdentifier().subtype(
             explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1))),
-        namedtype.OptionalNamedType('senderKID', rfc2459.KeyIdentifier().subtype(
+        namedtype.OptionalNamedType('senderKID', rfc5280.KeyIdentifier().subtype(
             explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 2))),
-        namedtype.OptionalNamedType('recipKID', rfc2459.KeyIdentifier().subtype(
+        namedtype.OptionalNamedType('recipKID', rfc5280.KeyIdentifier().subtype(
             explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 3))),
         namedtype.OptionalNamedType('transactionID', univ.OctetString().subtype(
             explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 4))),
@@ -760,6 +794,8 @@ class ProtectedPart(univ.Sequence):
     """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('header', PKIHeader()),
+        # this should really be 'body' not 'infoValue'
+        # not changed to preserve compatibility
         namedtype.NamedType('infoValue', PKIBody())
     )
 
@@ -772,7 +808,8 @@ class PKIMessage(univ.Sequence):
     protection   [0] PKIProtection OPTIONAL,
     extraCerts   [1] SEQUENCE SIZE (1..MAX) OF CMPCertificate
                   OPTIONAL
-     }"""
+     }
+    """
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('header', PKIHeader()),
         namedtype.NamedType('body', PKIBody()),
@@ -801,3 +838,156 @@ class PKIMessages(univ.SequenceOf):
 # NestedMessageContent ::= PKIMessages
 NestedMessageContent._componentType = PKIMessages()
 nestedMessageContent._componentType = PKIMessages()
+
+
+# The object identifiers and types for InfoTypeAndValue
+
+id_it = univ.ObjectIdentifier('1.3.6.1.5.5.7.4')
+
+
+id_it_caProtEncCert = id_it + (1,)
+
+class CAProtEncCertValue(CMPCertificate):
+    """
+    CAProtEncCertValue ::= CMPCertificate
+    """
+    pass
+
+
+id_it_signKeyPairTypes = id_it + (2,)
+
+class SignKeyPairTypesValue(univ.SequenceOf):
+    """
+    SignKeyPairTypesValue ::= SEQUENCE OF AlgorithmIdentifier
+    """
+    componentType = rfc5280.AlgorithmIdentifier()
+
+
+id_it_encKeyPairTypes = id_it + (3,)
+
+class EncKeyPairTypesValue(univ.SequenceOf):
+    """
+    EncKeyPairTypesValue ::= SEQUENCE OF AlgorithmIdentifier
+    """
+    componentType = rfc5280.AlgorithmIdentifier()
+
+
+id_it_preferredSymmAlg = id_it + (4,)
+
+class PreferredSymmAlgValue(rfc5280.AlgorithmIdentifier):
+    """
+    PreferredSymmAlgValue ::= AlgorithmIdentifier
+    """
+    pass
+
+
+id_it_caKeyUpdateInfo = id_it + (5,)
+
+class CAKeyUpdateInfoValue(CAKeyUpdAnnContent):
+    """
+    CAKeyUpdateInfoValue ::= CAKeyUpdAnnContent
+    """
+    pass
+
+
+id_it_currentCRL = id_it + (6,)
+
+class CurrentCRLValue(rfc5280.CertificateList):
+    """
+    CurrentCRLValue ::= CertificateList
+    """
+    pass
+
+
+id_it_unsupportedOIDs = id_it + (7,)
+
+class UnsupportedOIDsValue(univ.SequenceOf):
+    """
+    EncKeyPairTypesValue ::= SEQUENCE OF OBJECT IDENTIFIER
+    """
+    componentType = univ.ObjectIdentifier()
+
+
+id_it_keyPairParamReq = id_it + (10,)
+
+class KeyPairParamReqValue(univ.ObjectIdentifier):
+    """
+    KeyPairParamReqValue ::= OBJECT IDENTIFIER
+    """
+    pass
+
+
+id_it_keyPairParamRep = id_it + (11,)
+
+class KeyPairParamRepValue(rfc5280.AlgorithmIdentifier):
+    """
+    KeyPairParamRepValue ::= AlgorithmIdentifer
+    """
+    pass
+
+
+id_it_revPassphrase = id_it + (12,)
+
+class KeyPairParamRepValue(rfc4211.EncryptedValue):
+    """
+    RevPassphraseValue ::= EncryptedValue
+    """
+    pass
+
+
+id_it_implicitConfirm = id_it + (13,)
+
+class ImplicitConfirmValue(univ.Null):
+    """
+    ImplicitConfirmValue ::= NULL
+    """
+    pass
+
+
+id_it_confirmWaitTime = id_it + (14,)
+
+class ConfirmWaitTimeValue(useful.GeneralizedTime):
+    """
+    ConfirmWaitTimeValue ::= GeneralizedTime
+    """
+    pass
+
+
+id_it_origPKIMessage = id_it + (15,)
+
+class OrigPKIMessageValue(PKIMessages):
+    """
+    OrigPKIMessageValue ::= PKIMessages
+    """
+    pass
+
+
+id_it_suppLangTags = id_it + (16,)
+
+class SuppLangTagsValue(univ.SequenceOf):
+    """
+    SuppLangTagsValue ::= SEQUENCE OF UTF8String
+    """
+    componentType = char.UTF8String()
+
+
+# Map for InfoTypeAndValue OIDs to values
+
+_infoTypeAndValueMap = {
+    id_it_caProtEncCert: CAProtEncCertValue(),
+    id_it_signKeyPairTypes: SignKeyPairTypesValue(),
+    id_it_encKeyPairTypes: EncKeyPairTypesValue(),
+    id_it_preferredSymmAlg: PreferredSymmAlgValue(),
+    id_it_caKeyUpdateInfo: CAKeyUpdateInfoValue(),
+    id_it_currentCRL: CurrentCRLValue(),
+    id_it_unsupportedOIDs: UnsupportedOIDsValue(),
+    id_it_keyPairParamReq: KeyPairParamReqValue(),
+    id_it_keyPairParamRep: KeyPairParamRepValue(),
+    id_it_revPassphrase: KeyPairParamRepValue(),
+    id_it_implicitConfirm: ImplicitConfirmValue(),
+    id_it_confirmWaitTime: ConfirmWaitTimeValue(),
+    id_it_origPKIMessage: OrigPKIMessageValue(),
+    id_it_suppLangTags: SuppLangTagsValue(),
+}
+
+infoTypeAndValueMap.update(_infoTypeAndValueMap)
