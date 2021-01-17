@@ -34,6 +34,7 @@ def _OID(*components):
 
 
 # Import from RFC 3565
+# Initialization Vector for AES: OCTET STRING (SIZE(16))
 
 AES_IV = rfc3565.AES_IV
 
@@ -205,14 +206,6 @@ RC5_CBC_Parameters.componentType = namedtype.NamedTypes(
         univ.Integer().subtype(subtypeSpec=constraint.SingleValueConstraint(64, 128))),
     namedtype.OptionalNamedType('iv', univ.OctetString())
 )
-
-
-# Initialization Vector for AES: OCTET STRING (SIZE(16))
-
-class AES_IV(univ.OctetString):
-    pass
-
-AES_IV.subtypeSpec = constraint.ValueSizeConstraint(16, 16)
 
 
 # Initialization Vector for DES: OCTET STRING (SIZE(8))

@@ -10,6 +10,8 @@ import unittest
 from pyasn1.codec.der.decoder import decode as der_decoder
 from pyasn1.codec.der.encoder import encode as der_encoder
 
+from pyasn1.type import univ
+
 from pyasn1_modules import pem
 from pyasn1_modules import rfc5480
 from pyasn1_modules import rfc5751
@@ -47,14 +49,15 @@ PQMBBwYFK4EEACIGBSuBBAAjMBoGCSqGSIb3DQEBCDANBglghkgBZQMEAgEFAA==
         for cap in asn1Object:
             if cap['capabilityID'] in rfc5751.smimeCapabilityMap.keys():
                 substrate = cap['parameters']
-                cap_p, rest = der_decoder(
-                    substrate, asn1Spec=rfc5751.smimeCapabilityMap[cap['capabilityID']])
-                self.assertFalse(rest)
-                self.assertTrue(cap_p.prettyPrint())
-                self.assertEqual(substrate, der_encoder(cap_p))
+                asn1Spec = rfc5751.smimeCapabilityMap[cap['capabilityID']]
+                cap_p, rest = der_decoder(substrate, asn1Spec=asn1Spec)
                 count += 1
+                if not cap_p == univ.Null(""):
+                    self.assertFalse(rest)
+                    self.assertTrue(cap_p.prettyPrint())
+                    self.assertEqual(substrate, der_encoder(cap_p))
 
-        self.assertEqual(8, count)
+        self.assertEqual(13, count)
 
     def testOpenTypes(self):
         substrate = pem.readBase64fromText(self.smime_capabilities_pem_text)

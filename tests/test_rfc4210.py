@@ -7,11 +7,15 @@
 import sys
 import unittest
 
-from pyasn1.codec.der import decoder as der_decoder
-from pyasn1.codec.der import encoder as der_encoder
+from pyasn1.codec.der.decoder import decode as der_decoder
+from pyasn1.codec.der.encoder import encode as der_encoder
 
 from pyasn1_modules import pem
+from pyasn1_modules import rfc5280
+from pyasn1_modules import rfc3279
 from pyasn1_modules import rfc4210
+
+from pyasn1.type import univ
 
 
 class PKIMessageTestCase(unittest.TestCase):
@@ -111,14 +115,214 @@ JA5RSwQoMDYTj2WrwtM/nsP12T39or4JRZhlLSM43IaTwEBtQw==
         self.asn1Spec = rfc4210.PKIMessage()
 
     def testDerCodec(self):
-
         substrate = pem.readBase64fromText(self.pem_text)
-
-        asn1Object, rest = der_decoder.decode(substrate, asn1Spec=self.asn1Spec)
-
+        asn1Object, rest = der_decoder(substrate, asn1Spec=self.asn1Spec)
         self.assertFalse(rest)
         self.assertTrue(asn1Object.prettyPrint())
-        self.assertEqual(substrate, der_encoder.encode(asn1Object))
+        self.assertEqual(substrate, der_encoder(asn1Object))
+
+    def testOpenTypes(self):
+        substrate = pem.readBase64fromText(self.pem_text)
+        asn1Object, rest = der_decoder(substrate, 
+                                       asn1Spec=self.asn1Spec,
+                                       decodeOpenTypes=True)
+        self.assertFalse(rest)
+        self.assertTrue(asn1Object.prettyPrint())
+        self.assertEqual(substrate, der_encoder(asn1Object))
+
+class PKIMessageGenPTestCase(unittest.TestCase):
+    pem_text = """\
+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
+"""
+
+    def setUp(self):
+        self.asn1Spec = rfc4210.PKIMessage()
+
+    def testDerCodec(self):
+        substrate = pem.readBase64fromText(self.pem_text)
+        asn1Object, rest = der_decoder(substrate, asn1Spec=self.asn1Spec)
+        self.assertFalse(rest)
+        self.assertTrue(asn1Object.prettyPrint())
+        self.assertEqual(substrate, der_encoder(asn1Object))
+
+        found = False
+        for gpc in asn1Object['body']['gen']:
+            self.assertIn(gpc['infoType'], rfc4210.infoTypeAndValueMap)
+            spec = rfc4210.infoTypeAndValueMap[gpc['infoType']]
+            gpcv, rest = der_decoder(gpc['infoValue'], asn1Spec=spec)
+            self.assertFalse(rest)
+            self.assertTrue(gpcv.prettyPrint())
+            self.assertEqual(gpc['infoValue'], der_encoder(gpcv))
+            if gpc['infoType'] == rfc4210.id_it_preferredSymmAlg:
+                ede3_oid = univ.ObjectIdentifier('1.2.840.113549.3.7')
+                self.assertEqual(ede3_oid, gpcv['algorithm'])
+                found = True
+
+        self.assertTrue(found)
+
+    def testOpenTypes(self):
+        ede3_oid = univ.ObjectIdentifier('1.2.840.113549.3.7')
+        openTypesMap = rfc4210.infoTypeAndValueMap.copy()
+        # To handle unexpected NULL parameter values
+        openTypesMap.update(rfc5280.algorithmIdentifierMap)
+        openTypesMap.update({rfc3279.id_ecPublicKey: rfc3279.EcpkParameters()})
+        openTypesMap.update({ede3_oid: univ.Null()})
+        substrate = pem.readBase64fromText(self.pem_text)
+        asn1Object, rest = der_decoder(substrate, 
+                                       asn1Spec=self.asn1Spec,
+                                       openTypes=openTypesMap,
+                                       decodeOpenTypes=True)
+        self.assertFalse(rest)
+        self.assertTrue(asn1Object.prettyPrint())
+        self.assertEqual(substrate, der_encoder(asn1Object))
+
+        found = False
+        for gpc in asn1Object['body']['gen']:
+            if gpc['infoType'] == rfc4210.id_it_preferredSymmAlg:
+                self.assertEqual(ede3_oid, gpc['infoValue']['algorithm'])
+                found = True
+
+        assert found
 
 
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
