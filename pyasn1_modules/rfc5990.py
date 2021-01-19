@@ -3,8 +3,9 @@
 #
 # Created by Russ Housley with assistance from asn1ate v.0.6.0.
 # Updated by Russ Housley to update the SMIMECapabilities map.
+# Updated by Russ Housley to correct  aes192_Wrap and aes256_Wrap.
 #
-# Copyright (c) 2019, Vigil Security, LLC
+# Copyright (c) 2021, Vigil Security, LLC
 # License: http://snmplabs.com/pyasn1/license.html
 #
 # Use of the RSA-KEM Key Transport Algorithm in the CMS
@@ -196,11 +197,11 @@ aes128_Wrap['algorithm'] = id_aes128_Wrap
 # aes128_Wrap['parameters'] are absent
 
 aes192_Wrap = AlgorithmIdentifier()
-aes192_Wrap['algorithm'] = id_aes128_Wrap
+aes192_Wrap['algorithm'] = id_aes192_Wrap
 # aes192_Wrap['parameters'] are absent
 
 aes256_Wrap = AlgorithmIdentifier()
-aes256_Wrap['algorithm'] = id_sha256
+aes256_Wrap['algorithm'] = id_aes256_Wrap
 # aes256_Wrap['parameters'] are absent
 
 tdes_Wrap = AlgorithmIdentifier()
