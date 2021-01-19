@@ -34,4 +34,5 @@ jobs:
     - name: Run test
       run: |
         pip install --force-reinstall -r requirements.txt
+        PYTHONPATH=.:$PYTHONPATH python tests/__main__.py
 
