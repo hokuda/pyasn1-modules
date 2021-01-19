@@ -4,7 +4,6 @@
 # Created by Russ Housley with assistance from asn1ate v.0.6.0.
 # Updated by Russ Housley to update the SMIMECapabilities map.
 # Updated by Russ Housley to correct  aes192_Wrap and aes256_Wrap.
-=======
 #
 # Copyright (c) 2021, Vigil Security, LLC
 # License: http://snmplabs.com/pyasn1/license.html
