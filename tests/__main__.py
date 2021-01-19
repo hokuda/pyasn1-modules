@@ -8,11 +8,13 @@ import unittest
 
 suite = unittest.TestLoader().loadTestsFromNames(
     ['tests.test_pem.suite',
+     'tests.test_rfc2040.suite',
      'tests.test_rfc2314.suite',
      'tests.test_rfc2315.suite',
      'tests.test_rfc2437.suite',
      'tests.test_rfc2459.suite',
      'tests.test_rfc2511.suite',
+     'tests.test_rfc2528.suite',
      'tests.test_rfc2560.suite',
      'tests.test_rfc2631.suite',
      'tests.test_rfc2634.suite',
@@ -23,6 +25,7 @@ suite = unittest.TestLoader().loadTestsFromNames(
      'tests.test_rfc3114.suite',
      'tests.test_rfc3125.suite',
      'tests.test_rfc3161.suite',
+     'tests.test_rfc3217.suite',
      'tests.test_rfc3274.suite',
      'tests.test_rfc3279.suite',
      'tests.test_rfc3280.suite',
@@ -39,6 +42,7 @@ suite = unittest.TestLoader().loadTestsFromNames(
      'tests.test_rfc3779.suite',
      'tests.test_rfc3820.suite',
      'tests.test_rfc3852.suite',
+     'tests.test_rfc3874.suite',
      'tests.test_rfc4010.suite',
      'tests.test_rfc4043.suite',
      'tests.test_rfc4055.suite',
@@ -46,6 +50,7 @@ suite = unittest.TestLoader().loadTestsFromNames(
      'tests.test_rfc4108.suite',
      'tests.test_rfc4210.suite',
      'tests.test_rfc4211.suite',
+     'tests.test_rfc4231.suite',
      'tests.test_rfc4334.suite',
      'tests.test_rfc4357.suite',
      'tests.test_rfc4387.suite',
@@ -90,8 +95,10 @@ suite = unittest.TestLoader().loadTestsFromNames(
      'tests.test_rfc6210.suite',
      'tests.test_rfc6211.suite',
      'tests.test_rfc6482.suite',
+     'tests.test_rfc6484.suite',
      'tests.test_rfc6486.suite',
      'tests.test_rfc6487.suite',
+     'tests.test_rfc6494.suite',
      'tests.test_rfc6664.suite',
      'tests.test_rfc6955.suite',
      'tests.test_rfc6960.suite',
@@ -127,7 +134,9 @@ suite = unittest.TestLoader().loadTestsFromNames(
      'tests.test_rfc8696.suite',
      'tests.test_rfc8702.suite',
      'tests.test_rfc8708.suite',
-     'tests.test_rfc8769.suite']
+     'tests.test_rfc8769.suite',
+     'tests.test_rfc8894.suite',
+     'tests.test_rfc8951.suite']
 )
 
 
