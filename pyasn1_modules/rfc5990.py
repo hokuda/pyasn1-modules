@@ -2,8 +2,10 @@
 # This file is part of pyasn1-modules software.
 #
 # Created by Russ Housley with assistance from asn1ate v.0.6.0.
+# Updated by Russ Housley to update the SMIMECapabilities map.
+# Updated by Russ Housley to correct  aes192_Wrap and aes256_Wrap.
 #
-# Copyright (c) 2019, Vigil Security, LLC
+# Copyright (c) 2021, Vigil Security, LLC
 # License: http://snmplabs.com/pyasn1/license.html
 #
 # Use of the RSA-KEM Key Transport Algorithm in the CMS
@@ -17,6 +19,7 @@ from pyasn1.type import namedtype
 from pyasn1.type import univ
 
 from pyasn1_modules import rfc5280
+from pyasn1_modules import rfc5751
 
 MAX = float('inf')
 
@@ -194,11 +197,11 @@ aes128_Wrap['algorithm'] = id_aes128_Wrap
 # aes128_Wrap['parameters'] are absent
 
 aes192_Wrap = AlgorithmIdentifier()
-aes192_Wrap['algorithm'] = id_aes128_Wrap
+aes192_Wrap['algorithm'] = id_aes192_Wrap
 # aes192_Wrap['parameters'] are absent
 
 aes256_Wrap = AlgorithmIdentifier()
-aes256_Wrap['algorithm'] = id_sha256
+aes256_Wrap['algorithm'] = id_aes256_Wrap
 # aes256_Wrap['parameters'] are absent
 
 tdes_Wrap = AlgorithmIdentifier()
@@ -218,10 +221,11 @@ camellia256_Wrap['algorithm'] = id_camellia256_Wrap
 # camellia256_Wrap['parameters'] are absent
 
 
-# Update the Algorithm Identifier map in rfc5280.py.
-# Note that the ones that must not have parameters are not added to the map.
+# Update the Algorithm Identifier map in rfc5280.py and the
+# S/MIME Capabilities map in rfc5751.py. Note that the algorithm
+# identifiers that must not have parameters are not added to the maps.
 
-_algorithmIdentifierMapUpdate = {
+_mapUpdate = {
     id_rsa_kem: GenericHybridParameters(),
     id_kem_rsa: RsaKemParameters(),
     id_kdf_kdf2: KDF2_HashFunction(),
@@ -234,4 +238,5 @@ _algorithmIdentifierMapUpdate = {
     id_alg_CMS3DESwrap: univ.Null(),
 }
 
-rfc5280.algorithmIdentifierMap.update(_algorithmIdentifierMapUpdate)
+rfc5280.algorithmIdentifierMap.update(_mapUpdate)
+rfc5751.smimeCapabilityMap.update(_mapUpdate)

@@ -2,7 +2,8 @@
 # This file is part of pyasn1-modules software.
 #
 # Created by Russ Housley
-# Copyright (c) 2019, Vigil Security, LLC
+# Modified by Russ Housley to add tests for opentypes.
+# Copyright (c) 2020, Vigil Security, LLC
 # License: http://snmplabs.com/pyasn1/license.html
 #
 import sys
@@ -11,8 +12,12 @@ import unittest
 from pyasn1.codec.der.decoder import decode as der_decoder
 from pyasn1.codec.der.encoder import encode as der_encoder
 
+from pyasn1.type import univ
+
 from pyasn1_modules import pem
 from pyasn1_modules import rfc4211
+from pyasn1_modules import rfc5280
+from pyasn1_modules import rfc3279
 
 
 class CertificateReqTestCase(unittest.TestCase):
@@ -47,6 +52,31 @@ xfu5YVWi81/fw8QQ6X6YGHFQkomLd7jxakVyjxSng9BhO6GpjJNF
 
         self.assertEqual(1, count)
 
+    def testOpenTypes(self):
+        substrate = pem.readBase64fromText(self.pem_text)
+        asn1Object, rest = der_decoder(substrate,
+                               asn1Spec=self.asn1Spec,
+                               decodeOpenTypes=True)
+
+        self.assertFalse(rest)
+        self.assertTrue(asn1Object.prettyPrint())
+        self.assertEqual(substrate, der_encoder(asn1Object))
+
+        count = 0
+
+        for crm in asn1Object:
+            rdnSeq = crm['certReq']['certTemplate']['subject']['rdnSequence']
+            for rdn in rdnSeq:
+                self.assertEqual(rfc5280.id_at_commonName, rdn[0]['type'])
+                self.assertEqual('user', rdn[0]['value']['printableString'])
+                count += 1
+
+            algid = crm['popo']['signature']['algorithmIdentifier']
+            self.assertEqual(rfc3279.sha1WithRSAEncryption, algid['algorithm'])
+            self.assertEqual(univ.Null(""), algid['parameters'])
+            count += 1
+
+        self.assertEqual(2, count)
 
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
 
