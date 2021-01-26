@@ -1,5 +1,5 @@
 
-Revision 0.3.0, released XX-03-2020
+Revision 0.3.0, released XX-XX-2021
 -----------------------------------
 
 - Added support for Python 3.8.
@@ -41,6 +41,11 @@ Revision 0.3.0, released XX-03-2020
 - Add RFC8708 providing HSS/LMS Hash-based Signature Algorithm for CMS
 - Advance copyright statement to year 2020
 - Add RFC8769 providing CBOR and CBOR Sequence content types for CMS
+- Improve the test routine for RFC4055
+- Add RFC4056 providing RSASSA-PSS Signature Algorithm in CMS
+- Add RFC4262 providing S/MIME Capabilities Certificate Extension
+- Add RFC6066 providing PkiPath for the pkix-pkipath media type
+- Add RFC6492 providing a protocol for provisioning RPKI certificates
 
 Revision 0.2.8, released 16-11-2019
 -----------------------------------
