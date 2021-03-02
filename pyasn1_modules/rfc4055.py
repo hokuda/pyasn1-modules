@@ -2,10 +2,12 @@
 # This file is part of pyasn1-modules software.
 #
 # Created by Russ Housley with a very small amount of assistance from
-# asn1ate v.0.6.0.
+#   asn1ate v.0.6.0.
 # Modified by Russ Housley to add maps for opentypes.
+# Modified by Russ Housley to add PKCS#1 v1.5 algorithm identifiers, which
+#   are not in the ASN.1 module, but they are discussed in RFC 4055.
 #
-# Copyright (c) 2019, Vigil Security, LLC
+# Copyright (c) 2019-2021, Vigil Security, LLC
 # License: http://snmplabs.com/pyasn1/license.html
 #
 # Additional Algorithms and Identifiers for RSA Cryptography
@@ -78,6 +80,22 @@ sha384Identifier['parameters'] = univ.Null("")
 sha512Identifier = rfc5280.AlgorithmIdentifier()
 sha512Identifier['algorithm'] = id_sha512
 sha512Identifier['parameters'] = univ.Null("")
+
+sha224WithRSAEncryptionIdentifier = rfc5280.AlgorithmIdentifier()
+sha224WithRSAEncryptionIdentifier['algorithm'] = sha224WithRSAEncryption
+sha224WithRSAEncryptionIdentifier['parameters'] = univ.Null("")
+
+sha256WithRSAEncryptionIdentifier = rfc5280.AlgorithmIdentifier()
+sha256WithRSAEncryptionIdentifier['algorithm'] = sha256WithRSAEncryption
+sha256WithRSAEncryptionIdentifier['parameters'] = univ.Null("")
+
+sha384WithRSAEncryptionIdentifier = rfc5280.AlgorithmIdentifier()
+sha384WithRSAEncryptionIdentifier['algorithm'] = sha384WithRSAEncryption
+sha384WithRSAEncryptionIdentifier['parameters'] = univ.Null("")
+
+sha512WithRSAEncryptionIdentifier = rfc5280.AlgorithmIdentifier()
+sha512WithRSAEncryptionIdentifier['algorithm'] = sha512WithRSAEncryption
+sha512WithRSAEncryptionIdentifier['parameters'] = univ.Null("")
 
 mgf1SHA1Identifier = rfc5280.AlgorithmIdentifier()
 mgf1SHA1Identifier['algorithm'] = id_mgf1
