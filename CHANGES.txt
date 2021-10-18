@@ -59,6 +59,7 @@ Revision 0.3.0, released XX-XX-2021
 - Modified RFC4357 to include the new parameter set in RFC7836
 - Add RFC8994 providing ACP Node Name in X.509 Certificates
 - Add RFC8995 providing the masa-url certificate extension used by BRSKI
+- Add RFC4511 providing Lightweight Directory Access Protocol (LDAP)
 
 Revision 0.2.8, released 16-11-2019
 -----------------------------------
